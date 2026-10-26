@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>San Francisco · City on Film | Symbol Map</title>
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="vendor/leaflet.js"></script>
+  <script defer src="vendor/d3.min.js"></script>
+  <script defer src="data.js"></script><script defer src="symbol_map.js"></script>
+</head>
+<body>
+<header><a class="brand" href="./index.html"><span class="brand-icon">◉</span> CITY / ON FILM</a><span class="header-meta">SAN FRANCISCO <i></i> FILM LOCATION ATLAS</span><span class="edition">DATA EXPLORER / 01</span></header>
+<nav class="tabs" role="tablist" aria-label="Map views"><button id="explore-tab" role="tab" aria-selected="true" aria-controls="explore-panel">Explore map</button><button id="task-tab" role="tab" aria-selected="false" aria-controls="task-panel" tabindex="-1">Task 1 · Find the hotspots</button><button id="area-tab" role="tab" aria-selected="false" aria-controls="area-panel" tabindex="-1">Task 2 · The area trap</button></nav>
+<main>
+  <aside>
+  <div id="explore-panel" role="tabpanel" aria-labelledby="explore-tab">
+    <div class="eyebrow">THE CITY IS A FILM SET</div>
+    <h1>San Francisco.<span>On film.</span></h1>
+    <p class="intro">From street corners to the silver screen. Explore the city’s filming locations, one story at a time.</p>
+    <div class="stats" aria-live="polite"><div><strong id="record-count">—</strong><span>Mapped records</span></div><div><strong id="location-count">—</strong><span>Locations</span></div><div><strong id="film-count">—</strong><span>Productions</span></div></div>
+    <section class="filters"><div class="section-heading"><h2>Explore locations</h2><button id="reset">Reset ↺</button></div>
+      <label for="search">Title / location / director</label><input id="search" type="search" placeholder="Search Vertigo, Coit Tower…">
+      <label for="neighborhood">Neighborhood</label><select id="neighborhood"><option value="">All neighborhoods</option></select>
+      <div class="year-heading"><label for="year-min">Release year</label><output id="year-label"></output></div>
+      <div class="year-inputs"><input id="year-min" type="number" aria-label="Start year"><span>—</span><input id="year-max" type="number" aria-label="End year"></div>
+      <p class="hint">Year range is inclusive. Undated records appear only in the full range.</p>
+    </section>
+    <section class="ranking"><div class="section-heading"><h2>Top filming locations</h2><span>Records</span></div><div id="ranking"></div></section>
+    <div class="source">Source: Film Locations in San Francisco<br>File snapshot · 2026.10.26 <span id="data-note"></span></div>
+  </div>
+  <div id="task-panel" role="tabpanel" aria-labelledby="task-tab" hidden>
+    <div class="eyebrow">ASSIGNMENT 01 / COMPLETED</div>
+    <h1>Find the<span>hotspots.</span></h1>
+    <p class="intro">Keep places with 3 or more records to see where filming clusters.</p>
+    <div class="task-code"><div>symbol_map.js · updateMap()</div><pre><code>const locations = aggregateLocations(filtered)
+  <em>.filter(d =&gt; d.count &gt;= 3)</em>
+  .sort((a, b) =&gt; b.count - a.count);</code></pre></div>
+    <button id="run-task" class="task-action">Run task 1 ▶</button>
+    <div id="task-answer" class="task-answer" aria-live="polite"></div>
+    <p class="hint">Places are grouped by coordinates rounded to 5 decimal places. Uses the full dataset, independent of Explore map filters.</p>
+    <section class="stretch"><div class="eyebrow">STRETCH QUESTION</div><h2>10 places or fewer</h2><p id="stretch-answer"></p><button id="show-stretch" class="task-action secondary">Show stretch hotspots</button><div id="stretch-list"></div></section>
+    <p class="hint">The exercise screenshot shows 1,385 places. This local dataset and coordinate grouping produce <span id="task-total"></span>; results below are calculated from this file.</p>
+  </div>
+  <div id="area-panel" role="tabpanel" aria-labelledby="area-tab" hidden>
+    <div class="eyebrow">ASSIGNMENT 02 / COMPLETED</div>
+    <h1>The area<span>trap.</span></h1>
+    <p class="intro">What happens when circle radius grows linearly with the number of records?</p>
+    <div class="scale-switch" role="group" aria-label="Circle radius scale">
+      <button id="linear-scale" aria-pressed="true">Linear · Task 2</button>
+      <button id="sqrt-scale" aria-pressed="false">Square root · Compare</button>
+    </div>
+    <div class="task-code"><div>symbol_map.js · setupSizeScale()</div><pre><code>radius = <em id="scale-code">d3.scaleLinear()</em>
+  .domain([0, maximum])    // 0 → <span id="area-maximum">29</span> records
+  .range([0, CONFIG.maxRadius]); // 0 → 24 px</code></pre></div>
+    <button id="run-area" class="task-action">Run task 2 ▶</button>
+    <div id="area-result" class="task-answer" aria-live="polite"></div>
+    <table class="scale-table"><caption>Same maximum radius, different scales</caption><thead><tr><th scope="col">Radius scale</th><th scope="col">1 record</th><th scope="col" id="area-max-heading">29 records</th></tr></thead><tbody><tr><th scope="row">Linear</th><td id="linear-small"></td><td>24 px</td></tr><tr><th scope="row">Square root</th><td id="sqrt-small"></td><td>24 px</td></tr></tbody></table>
+    <section class="stretch"><div class="eyebrow">WHY DO SMALL CIRCLES DISAPPEAR?</div><p id="area-explanation"></p><p>Circle area is πr². With a linear radius scale, area grows with count², exaggerating large values. A square-root radius scale makes area proportional to count.</p></section>
+    <p class="hint">Uses all mapped locations, including single-record places. Both scales use the same data, map view, domain, and 24 px maximum radius. No minimum radius is applied.</p>
+  </div>
+  </aside>
+  <section class="map-panel" aria-label="Film location symbol map">
+    <div id="map"></div>
+    <div class="map-title"><span class="live-dot"></span> SYMBOL MAP <span>/</span> FILM LOCATIONS</div>
+    <button id="fit" class="map-fit">⌖ Fit all results</button>
+    <div id="notice" role="status" hidden></div>
+    <div class="legend"><div class="eyebrow">READING THE MAP</div><h3 id="legend-title">Larger circles, more records</h3><div id="legend-circles"></div><p id="legend-description">Circle area ∝ records at each coordinate<br>Click a circle to explore productions</p></div>
+    <div class="map-caption">LOCAL BASEMAP · SAN FRANCISCO</div>
+  </section>
+</main>
+</body></html>
